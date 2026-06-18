@@ -2,12 +2,12 @@
 
 ## Purpose
 
-Defines the runnable Next.js 15 (App Router) + React 19 + TypeScript frontend, the layout template, and per-environment configuration.
+Defines the runnable Next.js 16 (App Router) + React 19 + TypeScript + Ant Design 6 frontend, the layout template, and per-environment configuration.
 
 ## Requirements
 
 ### Requirement: Runnable Next.js build
-The frontend SHALL be a Next.js project bootstrappable with `npm run dev` (development server) and buildable with `npm run build` (production bundle) without errors. The project SHALL use the App Router with React 19 and TypeScript.
+The frontend SHALL be a Next.js 16 project bootstrappable with `npm run dev` (development server) and buildable with `npm run build` (production bundle) without errors. The project SHALL use the App Router with React 19, TypeScript (strict mode), and Ant Design 6. State management SHALL use Zustand for client-side state only; token management SHALL use httpOnly cookies, not client stores.
 
 #### Scenario: Dev server starts
 - **WHEN** `npm run dev` runs in `frontend/`

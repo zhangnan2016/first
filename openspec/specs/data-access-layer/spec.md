@@ -2,35 +2,101 @@
 
 ## Purpose
 
-Defines the MyBatis-Plus data access configuration, audit field auto-fill, and the enhanced base mapper used across all persistence operations.
+Defines the Spring Data JPA / Hibernate data access configuration, audit field auto-fill via lifecycle callbacks, logical delete via SQL annotations, and the repository pattern used across all persistence operations.
 
 ## Requirements
 
-### Requirement: MyBatis-Plus plugin configuration
-The data access layer SHALL register MyBatis-Plus pagination, optimistic-lock, and logical-delete plugins. Logical delete SHALL be driven by a configured deleted-flag column.
+### Requirement: Spring Data JPA repository configuration
+The data access layer SHALL use Spring Data JPA repositories (`JpaRepository` + `JpaSpecificationExecutor`) as the sole persistence abstraction. Repository scanning SHALL be enabled via `@EnableJpaRepositories`. No MyBatis / MyBatis-Plus mappers or configurations SHALL exist.
 
-#### Scenario: Pagination plugin is active
-- **WHEN** a mapper executes a paged query with `current` and `size`
-- **THEN** the returned page reports the correct `total` and limits results to `size`
+#### Scenario: Repository provides CRUD
+- **WHEN** a business repository extends `JpaRepository`
+- **THEN** standard CRUD operations (save, findById, deleteById) are available without additional code
 
-#### Scenario: Logical delete soft-removes rows
-- **WHEN** a `deleteById` is invoked on an entity with a logical-delete field
-- **THEN** the row's deleted flag is updated instead of being physically removed, and subsequent selects exclude it
+#### Scenario: Unpaginated findAll is forbidden
+- **WHEN** service or controller code attempts to call `findAll()` without a `Pageable` argument
+- **THEN** the code SHALL be rejected at review time; all list queries SHALL be paginated to prevent unbounded result sets and OOM
 
-### Requirement: BaseEntity audit fields
-Entities SHALL extend a `BaseEntity` providing `id`, `createTime`, `updateTime`, and `createBy`. A `MetaObjectHandler` SHALL auto-fill `createTime` and `createBy` on insert, and `updateTime` on update.
+#### Scenario: Dynamic queries via Specification
+- **WHEN** a paged query with optional filters (username, phone, status) is executed
+- **THEN** a JPA `Specification` is built dynamically with `CriteriaBuilder` predicates and passed to `findAll(spec, pageable)`
+
+### Requirement: Logical delete via Hibernate SQL annotations
+Entities requiring soft delete SHALL declare `@SQLDelete` and `@SQLRestriction` annotations at the entity level. The `deleteById` operation SHALL translate to an UPDATE setting the `deleted` flag, and all selects SHALL automatically exclude logically deleted rows.
+
+#### Scenario: deleteById soft-removes rows
+- **WHEN** `deleteById` is invoked on an entity with `@SQLDelete(sql = "UPDATE ... SET deleted = 1 WHERE id = ?")`
+- **THEN** the row's deleted flag is updated to 1 instead of being physically removed
+
+#### Scenario: Queries exclude deleted rows
+- **WHEN** any query (find, page, specification) runs against a `@SQLRestriction("deleted = 0")` entity
+- **THEN** results automatically exclude rows where `deleted = 1`
+
+#### Scenario: Unique constraint accounts for logical delete
+- **WHEN** a user with username "admin" is logically deleted and a new "admin" is created
+- **THEN** the database unique index SHALL account for the `deleted` flag, either via a composite unique index on `(username, deleted)` or by appending a tombstone suffix to the deleted row's username, preventing duplicate-key conflicts on re-registration
+
+### Requirement: BaseEntity audit fields via JPA lifecycle callbacks
+Entities SHALL extend a `@MappedSuperclass BaseEntity` providing `id`, `createTime`, `updateTime`, `createBy`, and `updateBy`. JPA lifecycle callbacks (`@PrePersist` / `@PreUpdate`) SHALL auto-fill `createTime` and `updateTime` on insert, and `updateTime` on update. The `createBy` field SHALL be populated from the current authenticated user's ID (via Sa-Token `StpUtil.getLoginIdAsLong()`) in `@PrePersist`; if no session exists (e.g. during data seeding) it SHALL remain null. The `updateBy` field SHALL be populated similarly in `@PreUpdate`. No MyBatis `MetaObjectHandler` SHALL exist.
 
 #### Scenario: Insert fills audit fields
-- **WHEN** a new entity is inserted without explicit audit values
-- **THEN** `createTime` and `createBy` are populated automatically by the fill handler
+- **WHEN** a new entity is persisted without explicit audit values
+- **THEN** `createTime` and `updateTime` are populated automatically by `@PrePersist`
 
 #### Scenario: Update refreshes update time
-- **WHEN** an existing entity is updated
-- **THEN** `updateTime` is refreshed automatically
+- **WHEN** an existing entity is updated and saved
+- **THEN** `updateTime` is refreshed automatically by `@PreUpdate`
 
-### Requirement: BaseMapperX common queries
-The data access layer SHALL provide a `BaseMapperX` extending MyBatis-Plus `BaseMapper` with reusable query helpers. Business mappers SHALL extend `BaseMapperX` to inherit these helpers.
+### Requirement: Snowflake primary key generation
+The primary key (`id`) SHALL be a `Long` generated by a custom Hibernate `IdentifierGenerator` (`SnowflakeIdGenerator`) registered via `@GenericGenerator`. The algorithm SHALL be structurally equivalent to MyBatis-Plus `IdType.ASSIGN_ID` (timestamp + workerId + sequence). The `workerId` SHALL be externally configurable via an environment variable or configuration property (e.g. `app.snowflake.worker-id`); in multi-instance deployments each instance SHALL be assigned a unique workerId. The default workerId (0) SHALL only be used in single-instance development. Snowflake IDs exceed JavaScript's `Number.MAX_SAFE_INTEGER`; the API layer SHALL serialize `Long` IDs as JSON strings (via `@JsonSerialize` with `ToStringSerializer`) to prevent precision loss on the frontend.
 
-#### Scenario: Business mapper inherits helpers
-- **WHEN** a business mapper extends `BaseMapperX`
-- **THEN** it exposes the common query helpers without redefining them
+#### Scenario: New entity gets snowflake ID
+- **WHEN** a new entity is saved without an explicit ID
+- **THEN** a globally unique, trend-increasing snowflake ID is assigned before persist
+
+#### Scenario: Clock rollback handling
+- **WHEN** the system clock rolls back (current timestamp < last timestamp used)
+- **THEN** the generator SHALL either wait until the clock catches up or throw an exception, but SHALL NOT generate a duplicate ID
+
+### Requirement: Hibernate DDL validation
+The application SHALL configure `spring.jpa.hibernate.ddl-auto: validate`. Hibernate SHALL only verify entity-to-table schema consistency at startup; it SHALL NOT auto-create or alter tables.
+
+#### Scenario: Missing column fails fast
+- **WHEN** an entity maps to a column that does not exist in the database table
+- **THEN** application startup fails with a schema validation error
+
+#### Scenario: Type mismatch fails fast
+- **WHEN** an entity field type is incompatible with the database column type
+- **THEN** application startup fails with a schema validation error
+
+#### Scenario: Length mismatch is NOT detected by validate
+- **WHEN** an entity declares `@Column(length=50)` but the database column is `VARCHAR(30)`
+- **THEN** startup succeeds (Hibernate validate does NOT check length); length validation SHALL be enforced via DB constraints and DTO `@Size` annotations
+
+### Requirement: Password hashing
+User passwords SHALL be stored as salted hashes (BCrypt or Argon2), never in plaintext. The login flow SHALL hash the incoming password and compare digests, not raw strings. The `password` field SHALL NOT be serialized in any VO or API response.
+
+#### Scenario: Password is hashed on create
+- **WHEN** a new user is created with a plaintext password in the DTO
+- **THEN** the service layer hashes the password (e.g. via `BCryptPasswordEncoder`) before persisting
+
+#### Scenario: Login compares hashes
+- **WHEN** a login request provides a plaintext password
+- **THEN** the service compares the hash of the input against the stored hash; raw passwords are never compared directly
+
+### Requirement: Entity field length constraints
+All `String` entity fields SHALL declare explicit `@Column(length = N)`. Standard lengths: `username`/`nickname` ≤ 50, `password` hash ≤ 100, `email` ≤ 128, `phone` ≤ 20. The `status` and `deleted` fields SHALL use `TINYINT`. These lengths serve as the authoritative DDL reference since `ddl-auto: validate` does not enforce them.
+
+### Requirement: Optimistic locking for concurrent updates
+Entities subject to concurrent modification SHALL declare a `@Version` field (Long or Timestamp). When a stale version is detected during save, the operation SHALL fail with a concurrent modification error mapped to `BUSINESS_ERROR`.
+
+#### Scenario: Concurrent update conflict
+- **WHEN** two requests update the same entity simultaneously with stale versions
+- **THEN** the second save fails with `ObjectOptimisticLockingFailureException`, mapped to a user-friendly `BUSINESS_ERROR` response
+
+### Requirement: Database-level uniqueness for concurrent duplicate prevention
+Business-unique fields (e.g. `username`) SHALL be protected by a database unique constraint, not only application-level pre-checks. The check-then-insert pattern has a TOCTOU race window; the DB constraint is the authoritative guard.
+
+#### Scenario: Concurrent duplicate creation is prevented
+- **WHEN** two concurrent requests create users with the same username and both pass the application-level pre-check
+- **THEN** the database unique constraint causes one request to fail with `DATA_DUPLICATED`

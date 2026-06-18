@@ -36,16 +36,16 @@ When the backend signals an unauthenticated state (token invalid/expired), the i
 - **THEN** the `imooc_token` and `imooc_user_id` cookies are cleared and the user is redirected to the login page
 
 ### Requirement: Route permission guard
-A Next.js `middleware.ts` SHALL intercept navigation to protected routes and redirect unauthenticated users to the login page. After a successful login, dynamic routes SHALL be loaded from the server menu and registered. The middleware SHALL check for the presence of the `imooc_token` cookie to determine authentication status.
+A Next.js route guard (`proxy.ts`) SHALL intercept navigation to protected routes and redirect unauthenticated users to the login page. The guard SHALL check for the presence of the `imooc_token` cookie to determine authentication status. Authenticated users visiting `/login` SHALL be redirected to the home page.
 
 #### Scenario: Unauthenticated access redirects
 - **WHEN** an unauthenticated user (no `imooc_token` cookie) opens a protected route
-- **THEN** the middleware redirects to the login page with a `redirect` query parameter
+- **THEN** the middleware redirects to the login page with a `redirect` query parameter. The `redirect` value SHALL be validated to contain only relative paths (starting with `/` and not `//`); absolute URLs SHALL be stripped to prevent open-redirect phishing attacks
 
 #### Scenario: Authenticated access proceeds
 - **WHEN** an authenticated user (valid `imooc_token` cookie) opens a protected route
-- **THEN** the middleware allows the request to proceed to the page
+- **THEN** the guard allows the request to proceed to the page
 
-#### Scenario: Post-login dynamic routes
-- **WHEN** a user logs in successfully
-- **THEN** the guard fetches the server menu and registers the corresponding dynamic routes before navigation
+#### Scenario: Authenticated user visiting login is redirected
+- **WHEN** an authenticated user (valid `imooc_token` cookie) visits `/login`
+- **THEN** the guard redirects to the home page `/`

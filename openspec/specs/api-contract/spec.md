@@ -45,3 +45,23 @@ Pagination responses SHALL use `PageResult<T>` exposing `records`, `total`, `cur
 #### Scenario: Paginated list returns full metadata
 - **WHEN** a list endpoint is called with `current` and `size` parameters
 - **THEN** `data` contains `records`, `total`, `current`, and `size`
+
+#### Scenario: Pagination parameters are bounded
+- **WHEN** `current` is 0, negative, or omitted
+- **THEN** it SHALL default to 1; values < 1 SHALL be clamped to 1, not rejected
+- **WHEN** `size` exceeds the maximum page size (200)
+- **THEN** it SHALL be silently truncated to 200 to prevent OOM; values ≤ 0 SHALL default to 10
+
+### Requirement: Input validation constraints
+All DTO string fields SHALL declare `@Size` constraints matching the corresponding entity column lengths. Numeric fields SHALL declare `@Min`/`@Max` where applicable. Validation failures SHALL be caught by the global exception handler and mapped to `PARAM_ERROR`. Unvalidated fields reaching the database layer indicate a spec violation.
+
+#### Scenario: Oversized input is rejected
+- **WHEN** a client submits a field value exceeding its declared `@Size` limit
+- **THEN** the request is rejected with `PARAM_ERROR` before reaching the persistence layer
+
+### Requirement: Idempotency for mutating operations
+Create and update endpoints SHALL be idempotent at the business-key level: duplicate submissions with the same business key SHALL NOT produce duplicate side effects. This SHALL be achieved via database unique constraints (create) or idempotency keys (update).
+
+#### Scenario: Duplicate create is rejected
+- **WHEN** two concurrent or sequential create requests submit the same unique business key (e.g. username)
+- **THEN** the second request SHALL fail with `DATA_DUPLICATED`, not create a duplicate record

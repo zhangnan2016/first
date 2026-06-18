@@ -7,7 +7,7 @@ Defines the thin Backend-for-Frontend layer using Next.js Route Handlers and Ser
 ## Requirements
 
 ### Requirement: 登录后写入 httpOnly cookie
-登录成功后，Next.js Route Handler / Server Action SHALL 将后端返回的 token 写入 `httpOnly`、`secure`、`sameSite=lax` 的 cookie，使服务端与客户端均可读取而 JavaScript 无法直接访问。
+登录成功后，Next.js Route Handler / Server Action SHALL 将后端返回的 token 写入 `httpOnly`、`secure`、`sameSite=lax`、`path=/` 的 cookie，且 `maxAge` SHALL 与 Sa-Token 会话超时时间一致。登出时 SHALL 将 cookie 的 `maxAge` 设为 0 以确保浏览器立即清除。使服务端与客户端均可读取而 JavaScript 无法直接访问。
 
 #### Scenario: 登录成功设置 cookie
 - **WHEN** 用户提交有效凭据，后端返回 token 与 userId
@@ -43,7 +43,7 @@ Server Components 发起的后端请求 SHALL 从请求上下文中读取 cookie
 - **THEN** 请求发送到 Next.js Route Handler，由其读取 cookie 注入 token 后转发到后端
 
 ### Requirement: 业务逻辑隔离
-薄 BFF 层 SHALL 仅负责认证 cookie 管理、token 注入与请求转发，SHALL NOT 承担任何业务逻辑（如数据转换、业务校验、状态聚合）。
+薄 BFF 层 SHALL 仅负责认证 cookie 管理、token 注入与请求转发，SHALL NOT 承担任何业务逻辑（如数据转换、业务校验、状态聚合）。例外：BFF MAY 执行传输层状态码映射（如后端 401 → HTTP 401 + 清除 cookie）和响应信封透传，这些属于传输层职责而非业务逻辑。
 
 #### Scenario: BFF 不包含业务逻辑
 - **WHEN** 审查 Route Handler / Server Action 代码

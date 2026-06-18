@@ -18,7 +18,7 @@ The backend SHALL expose a Knife4j (OpenAPI 3) documentation UI aggregating all 
 - **THEN** its summary, parameters, and response schema are rendered
 
 ### Requirement: Documentation access control
-In production the documentation UI SHALL be disabled or protected. In non-production it SHALL be open to developers.
+In production the documentation UI SHALL be completely disabled (Knife4j `enabled: false`); it SHALL NOT be accessible via any URL. If runtime access is required, it SHALL require Basic Auth credentials sourced from environment variables, not hardcoded. In non-production it SHALL be open to developers.
 
 #### Scenario: Production hides the UI
 - **WHEN** the application runs with the production profile
