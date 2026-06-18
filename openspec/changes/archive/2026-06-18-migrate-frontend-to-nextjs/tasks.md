@@ -57,5 +57,5 @@
 - [x] 8.1 运行 `npm run build` 验证生产构建无错误
 - [x] 8.2 创建 `vercel.json`（如需自定义配置）或确认零配置部署可用
 - [x] 8.3 验证 `.gitignore` 排除 `.next/`、`node_modules/`
-- [ ] 8.4 在子模块仓库提交并推送 `nextjs` 分支
-- [ ] 8.5 回到根仓库更新 `frontend` 子模块指针（`git add frontend && git commit`）
+- [x] 8.4 在子模块仓库提交并推送 `nextjs` 分支
+- [x] 8.5 回到根仓库更新 `frontend` 子模块指针（`git add frontend && git commit`）
