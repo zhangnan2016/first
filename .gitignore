@@ -1,0 +1,49 @@
+# 依赖
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+venv/
+vendor/
+
+# 构建产物
+dist/
+build/
+out/
+target/
+*.egg-info/
+.next/
+.nuxt/
+
+# IDE / 编辑器
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# 环境变量
+.env
+.env.local
+.env.*.local
+*.local
+
+# 日志
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OpenSpec 归档（按需保留或忽略，默认忽略以保持仓库整洁）
+# 取消注释下行则忽略已归档的变更
+# openspec/changes/archive/
+
+# OpenSpec 元数据
+.openspec-workspace/
+
+# 临时文件
+tmp/
+temp/
+.cache/

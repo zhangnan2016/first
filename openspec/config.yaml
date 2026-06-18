@@ -1,0 +1,19 @@
+# OpenSpec Configuration
+# 文档: https://github.com/Fission-AI/OpenSpec
+
+# AI 工具配置
+tools:
+  - qoder
+
+# 工作流配置（artifact-guided 工作流）
+profile: core
+
+# 语言偏好
+language: en
+
+# 规范与变更的根目录（相对项目根）
+specsDir: specs
+changesDir: changes
+
+# 遥测（匿名使用统计，可在 CI 中自动禁用）
+telemetry: true

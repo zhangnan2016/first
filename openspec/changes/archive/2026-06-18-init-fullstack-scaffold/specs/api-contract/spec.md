@@ -1,0 +1,41 @@
+## ADDED Requirements
+
+### Requirement: Unified response envelope
+Every HTTP endpoint SHALL return a body shaped as `R<T>` with fields `code` (integer), `msg` (string), and `data` (generic payload). `code` equal to `0` SHALL indicate success; any non-zero value SHALL indicate an error.
+
+#### Scenario: Successful response shape
+- **WHEN** any controller endpoint completes successfully
+- **THEN** the serialized JSON body contains `code`, `msg`, and `data` keys, with `code` equal to `0`
+
+#### Scenario: Error code semantics
+- **WHEN** a business error occurs
+- **THEN** `code` is a non-zero value sourced from `ResultCode` and `data` is null
+
+### Requirement: ResultCode enumeration
+The system SHALL define a `ResultCode` enumeration mapping every non-zero code to a human-readable message. Business and system errors SHALL reference these codes exclusively.
+
+#### Scenario: Known code resolves to message
+- **WHEN** a `ResultCode` value is looked up
+- **THEN** it exposes both its numeric `code` and its `msg`
+
+### Requirement: Global exception handling
+A single `@RestControllerAdvice` SHALL translate exceptions into `R<Void>` responses so the frontend always receives a parsable envelope. Validation errors, business errors (`BizException`), and uncaught errors SHALL each be mapped to an appropriate `ResultCode`.
+
+#### Scenario: Validation error is mapped
+- **WHEN** a `MethodArgumentNotValidException` is thrown
+- **THEN** the response body is `R<Void>` with a validation-related `ResultCode` and the field error message in `msg`
+
+#### Scenario: Business exception is mapped
+- **WHEN** a `BizException` carrying a `ResultCode` is thrown
+- **THEN** the response body is `R<Void>` carrying that same `ResultCode`
+
+#### Scenario: Unknown error is handled gracefully
+- **WHEN** an uncaught exception propagates to the advice
+- **THEN** the response is a `R<Void>` with a generic server-error code, and the stack trace is not leaked to the client
+
+### Requirement: PageResult pagination envelope
+Pagination responses SHALL use `PageResult<T>` exposing `records`, `total`, `current`, and `size`. List endpoints accepting page parameters SHALL return this envelope inside `R<PageResult<T>>`.
+
+#### Scenario: Paginated list returns full metadata
+- **WHEN** a list endpoint is called with `current` and `size` parameters
+- **THEN** `data` contains `records`, `total`, `current`, and `size`
