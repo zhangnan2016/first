@@ -1,8 +1,8 @@
 # Homepage Feature Nav · 模块规格说明
 
 > **文档版本**：v1.0
-> **所属变更**：[build-homepage](../openspec/changes/build-homepage/proposal.md)
-> **关联 delta spec**：[homepage-feature-nav/spec.md](../openspec/changes/build-homepage/specs/homepage-feature-nav/spec.md)
+> **所属变更**：[build-homepage](../changes/build-homepage/proposal.md)
+> **关联 delta spec**：[homepage-feature-nav/spec.md](../changes/build-homepage/specs/homepage-feature-nav/spec.md)
 > **优先级**：P0（静态区块，零 API 依赖，可独立先行交付）
 
 ---

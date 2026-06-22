@@ -1,8 +1,8 @@
 # Homepage Trending Posts · 模块规格说明
 
 > **文档版本**：v1.0
-> **所属变更**：[build-homepage](../openspec/changes/build-homepage/proposal.md)
-> **关联 delta spec**：[homepage-trending-posts/spec.md](../openspec/changes/build-homepage/specs/homepage-trending-posts/spec.md)
+> **所属变更**：[build-homepage](../changes/build-homepage/proposal.md)
+> **关联 delta spec**：[homepage-trending-posts/spec.md](../changes/build-homepage/specs/homepage-trending-posts/spec.md)
 > **优先级**：P0（数据区块，依赖社区模块 API）
 
 ---

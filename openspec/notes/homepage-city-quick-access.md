@@ -1,8 +1,8 @@
 # Homepage City Quick Access · 模块规格说明
 
 > **文档版本**：v1.0
-> **所属变更**：[build-homepage](../openspec/changes/build-homepage/proposal.md)
-> **关联 delta spec**：[homepage-city-quick-access/spec.md](../openspec/changes/build-homepage/specs/homepage-city-quick-access/spec.md)
+> **所属变更**：[build-homepage](../changes/build-homepage/proposal.md)
+> **关联 delta spec**：[homepage-city-quick-access/spec.md](../changes/build-homepage/specs/homepage-city-quick-access/spec.md)
 > **优先级**：P0（静态区块，零 API 依赖，可独立先行交付）
 
 ---

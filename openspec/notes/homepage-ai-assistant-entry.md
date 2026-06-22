@@ -1,8 +1,8 @@
 # Homepage AI Assistant Entry · 模块规格说明
 
 > **文档版本**：v1.0
-> **所属变更**：[build-homepage](../openspec/changes/build-homepage/proposal.md)
-> **关联 delta spec**：[homepage-ai-assistant-entry/spec.md](../openspec/changes/build-homepage/specs/homepage-ai-assistant-entry/spec.md)
+> **所属变更**：[build-homepage](../changes/build-homepage/proposal.md)
+> **关联 delta spec**：[homepage-ai-assistant-entry/spec.md](../changes/build-homepage/specs/homepage-ai-assistant-entry/spec.md)
 > **优先级**：P0（全局悬浮入口，挂在 Layout 层级）
 
 ---

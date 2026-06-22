@@ -1,8 +1,8 @@
 # Homepage Hero · 模块规格说明
 
 > **文档版本**：v1.0
-> **所属变更**：[build-homepage](../openspec/changes/build-homepage/proposal.md)
-> **关联 delta spec**：[homepage-hero/spec.md](../openspec/changes/build-homepage/specs/homepage-hero/spec.md)
+> **所属变更**：[build-homepage](../changes/build-homepage/proposal.md)
+> **关联 delta spec**：[homepage-hero/spec.md](../changes/build-homepage/specs/homepage-hero/spec.md)
 > **优先级**：P0（静态区块，无 API 依赖，可独立先行交付）
 
 ---
